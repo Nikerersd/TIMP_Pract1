@@ -49,3 +49,23 @@ async def register(data: UserRegister, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     return {"message": "User registered successfully"}
+
+@router.get("/users/employees")
+async def get_employees(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User.name, User.role).where(User.role == "employee"))
+    return result.mappings().all()  # Возвращает список словарей
+
+@router.post("/users")
+async def create_user(
+    user_data: UserRegister,
+    db: AsyncSession = Depends(get_db)
+):
+    hashed_password = bcrypt.hash(user_data.password)
+    new_user = User(
+        name=user_data.name,
+        password_hash=hashed_password,
+        role="employee"  # или получать роль из запроса
+    )
+    db.add(new_user)
+    await db.commit()
+    return {"message": "User created successfully"}

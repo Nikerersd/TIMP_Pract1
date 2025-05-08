@@ -15,3 +15,7 @@ class UserRegister(BaseModel):
         if not re.match(r"^[a-zA-Z0-9_]+$", value):
             raise ValueError("Имя может содержать только буквы, цифры и подчёркивания")
         return value
+
+class FacilityCreate(BaseModel):
+    name: str
+    location: str
