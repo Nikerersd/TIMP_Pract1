@@ -11,15 +11,47 @@ export default function Register() {
   const navigate = useNavigate();
 
   const handleRegister = async () => {
+    // Проверка на пустые поля
+    if (!name.trim() || !password.trim()) {
+      alert("Пожалуйста, заполните все поля");
+      return;
+    }
+  
+    // Дополнительные проверки пароля (по желанию)
+    if (password.length < 6) {
+      alert("Пароль должен содержать минимум 6 символов");
+      return;
+    }
+  
     try {
       const res = await axios.post("http://localhost:8000/register", {
-        name,
-        password,
+        name: name.trim(),
+        password: password.trim(),
       });
+      
       alert(res.data.message);
-      navigate("/login");
+      // Перенаправление после успешной регистрации
+      navigate("/login"); // Или другую страницу
+      
     } catch (err) {
-      alert("Ошибка регистрации. Попробуйте снова.");
+      if (axios.isAxiosError(err)) {
+        // Обработка разных статусных кодов
+        switch (err.response?.status) {
+          case 400:
+            alert("Пользователь с таким именем уже существует");
+            break;
+          case 422:
+            alert("Ошибка валидации: " + err.response.data.detail);
+            break;
+          case 500:
+            alert("Ошибка сервера. Пожалуйста, попробуйте позже");
+            break;
+          default:
+            alert("Произошла ошибка: " + err.message);
+        }
+      } else {
+        alert("Неизвестная ошибка при регистрации");
+      }
     }
   };
 

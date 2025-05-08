@@ -15,10 +15,22 @@ async def get_db():
 
 @router.post("/login")
 async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
-    query = await db.execute(select(User).where(User.name == data.name))
-    user = query.scalar_one_or_none()
-    if not user or not bcrypt.verify(data.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    # Проверка на пустые данные
+    if not data.name.strip() or not data.password.strip():
+        await db.rollback()
+        raise HTTPException(status_code=422, detail="Имя и пароль не могут быть пустыми")
+    
+    user = (await db.execute(select(User).where(User.name == data.name))).scalar_one_or_none()
+    
+    if not user:
+        await db.rollback()
+        raise HTTPException(status_code=401, detail="Пользователь не найден")
+    
+    if not bcrypt.verify(data.password, user.password_hash):
+        await db.rollback()
+        raise HTTPException(status_code=401, detail="Неверный пароль")
+    
+    await db.commit()
     return {"message": "Login successful"}
 
 @router.post("/register")

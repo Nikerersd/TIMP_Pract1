@@ -11,17 +11,42 @@ export default function Login() {
   const navigate = useNavigate()
 
   const handleLogin = async () => {
+    // Проверка на пустые поля
+    if (!name.trim() || !password.trim()) {
+      alert("Пожалуйста, заполните все поля");
+      return;
+    }
+  
     try {
       const res = await axios.post("http://localhost:8000/login", {
-        name,
-        password,
-      })
-      alert(res.data.message)
-      // Перенаправление после успешного входа
+        name: name.trim(),
+        password: password.trim(),
+      });
+      
+      alert(res.data.message);
+      navigate("/dashboard");
+      
     } catch (err) {
-      alert("Неверные учетные данные")
+      if (axios.isAxiosError(err)) {
+        // Обработка разных статусных кодов
+        switch (err.response?.status) {
+          case 401:
+            alert("Неверное имя пользователя или пароль");
+            break;
+          case 422:
+            alert("Ошибка валидации: " + err.response.data.detail);
+            break;
+          case 500:
+            alert("Ошибка сервера. Пожалуйста, попробуйте позже");
+            break;
+          default:
+            alert("Произошла ошибка: " + err.message);
+        }
+      } else {
+        alert("Неизвестная ошибка");
+      }
     }
-  }
+  };
 
   return (
     <div style={styles.pageContainer}>
