@@ -52,7 +52,7 @@ async def register(data: UserRegister, db: AsyncSession = Depends(get_db)):
 
 @router.get("/users/employees")
 async def get_employees(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User.name, User.role).where(User.role == "employee"))
+    result = await db.execute(select(User.id, User.name, User.role).where(User.role == "employee"))
     return result.mappings().all()  # Возвращает список словарей
 
 @router.post("/users")

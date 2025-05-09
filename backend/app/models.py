@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from .database import Base
 
 class User(Base):
@@ -13,3 +13,11 @@ class Facility(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     location = Column(String, nullable=False)
+
+class IncidentLog(Base):
+    __tablename__ = "incident_log"
+    id = Column(Integer, primary_key=True, index=True)
+    incident_type = Column(String, nullable=False)
+    incident_time = Column(DateTime, nullable=False)
+    facility_id = Column(Integer, ForeignKey('facilities.id'))
+    responsible_user_id = Column(Integer, ForeignKey('users.id'))

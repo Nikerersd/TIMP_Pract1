@@ -13,7 +13,14 @@ interface Facility {
     name: string;
     location: string;
   }
-  
+
+interface Incident {
+id: number;
+incident_type: string;
+incident_time: string;
+facility_name: string;
+responsible_user_name: string;
+}
 
 export default function Dashboard() {
     const [activeSection, setActiveSection] = useState<string>('employees');
@@ -23,6 +30,12 @@ export default function Dashboard() {
     const [newEmployeePassword, setNewEmployeePassword] = useState('');
     const [newFacilityName, setNewFacilityName] = useState('');
     const [newFacilityLocation, setNewFacilityLocation] = useState('');
+    const [incidents, setIncidents] = useState<Incident[]>([]);
+    const [newIncident, setNewIncident] = useState({
+    type: '',
+    facilityId: '',
+    userId: ''
+    });
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -30,6 +43,10 @@ export default function Dashboard() {
           fetchEmployees();
         } else if (activeSection === 'facilities') {
           fetchFacilities();
+        } else if (activeSection === 'incidents') {
+          fetchIncidents();
+          fetchFacilities(); // Для выпадающего списка объектов
+          fetchEmployees(); // Для выпадающего списка сотрудников
         }
       }, [activeSection]);
 
@@ -48,6 +65,15 @@ export default function Dashboard() {
       setFacilities(response.data);
     } catch (error) {
       console.error('Ошибка при загрузке объектов:', error);
+    }
+  };
+
+  const fetchIncidents = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/incidents');
+      setIncidents(response.data);
+    } catch (error) {
+      console.error('Ошибка при загрузке инцидентов:', error);
     }
   };
 
@@ -95,6 +121,27 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Ошибка при добавлении объекта:', error);
       alert('Ошибка при добавлении объекта');
+    }
+  };
+
+  const handleAddIncident = async () => {
+    if (!newIncident.type || !newIncident.facilityId || !newIncident.userId) {
+      alert('Заполните все поля');
+      return;
+    }
+  
+    try {
+      await axios.post('http://localhost:8000/incidents', {
+        incident_type: newIncident.type,
+        facility_id: newIncident.facilityId,
+        responsible_user_id: newIncident.userId
+      });
+      setNewIncident({ type: '', facilityId: '', userId: '' });
+      fetchIncidents();
+      alert('Инцидент успешно добавлен');
+    } catch (error) {
+      console.error('Ошибка при добавлении инцидента:', error);
+      alert('Ошибка при добавлении инцидента');
     }
   };
 
@@ -262,11 +309,81 @@ export default function Dashboard() {
             )}
         
         {activeSection === 'incidents' && (
-          <div style={styles.section}>
-            <h2 style={styles.sectionHeader}>Журнал инцидентов</h2>
-            {/* Содержимое раздела */}
-          </div>
-        )}
+            <div style={styles.section}>
+                <h2 style={styles.sectionHeader}>Журнал инцидентов</h2>
+                
+                <div style={styles.addForm}>
+                <div style={styles.inputContainer}>
+                    <label style={styles.inputLabel}>Тип инцидента</label>
+                    <input
+                    type="text"
+                    value={newIncident.type}
+                    onChange={(e) => setNewIncident({...newIncident, type: e.target.value})}
+                    placeholder="Введите тип инцидента"
+                    style={styles.inputField}
+                    />
+                </div>
+                
+                <div style={styles.inputContainer}>
+                    <label style={styles.inputLabel}>Объект</label>
+                    <select
+                    value={newIncident.facilityId}
+                    onChange={(e) => setNewIncident({...newIncident, facilityId: e.target.value})}
+                    style={styles.inputField}
+                    >
+                    <option value="">Выберите объект</option>
+                    {facilities.map(facility => (
+                        <option key={facility.id} value={facility.id}>{facility.name}</option>
+                    ))}
+                    </select>
+                </div>
+                
+                <div style={styles.inputContainer}>
+                    <label style={styles.inputLabel}>Ответственный сотрудник</label>
+                    <select
+                    value={newIncident.userId}
+                    onChange={(e) => setNewIncident({...newIncident, userId: e.target.value})}
+                    style={styles.inputField}
+                    >
+                    <option value="">Выберите сотрудника</option>
+                    {users.map(user => (
+                        <option key={user.id} value={user.id}>{user.name}</option>
+                    ))}
+                    </select>
+                </div>
+                
+                <button onClick={handleAddIncident} style={styles.addButton}>
+                    Добавить инцидент
+                </button>
+                </div>
+                
+                <div style={styles.listContainer}>
+                <h3 style={styles.listHeader}>Список инцидентов</h3>
+                {incidents.length > 0 ? (
+                    <div style={styles.tableContainer}>
+                    <div style={styles.tableHeader}>
+                        <div style={{...styles.tableCell, flex: 1}}>Тип</div>
+                        <div style={{...styles.tableCell, flex: 1}}>Время</div>
+                        <div style={{...styles.tableCell, flex: 1}}>Объект</div>
+                        <div style={{...styles.tableCell, flex: 1}}>Ответственный</div>
+                    </div>
+                    {incidents.map(incident => (
+                        <div key={incident.id} style={styles.tableRow}>
+                        <div style={{...styles.tableCell, flex: 1}}>{incident.incident_type}</div>
+                        <div style={{...styles.tableCell, flex: 1}}>
+                            {new Date(incident.incident_time).toLocaleString()}
+                        </div>
+                        <div style={{...styles.tableCell, flex: 1}}>{incident.facility_name}</div>
+                        <div style={{...styles.tableCell, flex: 1}}>{incident.responsible_user_name}</div>
+                        </div>
+                    ))}
+                    </div>
+                ) : (
+                    <p style={styles.noData}>Нет зарегистрированных инцидентов</p>
+                )}
+                </div>
+            </div>
+            )}
         
         {activeSection === 'notifications' && (
           <div style={styles.section}>

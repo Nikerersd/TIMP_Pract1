@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
+from datetime import datetime
 from typing import Annotated
 import re
 
@@ -19,3 +20,8 @@ class UserRegister(BaseModel):
 class FacilityCreate(BaseModel):
     name: str
     location: str
+
+class IncidentCreate(BaseModel):
+    incident_type: str
+    facility_id: int
+    responsible_user_id: int
